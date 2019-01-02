@@ -1,2 +1,2 @@
 # mongo-lock
-Exclusive distributed lock library for .NET using MongoDB
+Exclusive distributed locking for .NET and MongoDB
