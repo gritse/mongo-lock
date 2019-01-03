@@ -1,6 +1,6 @@
 # mongo-lock
-Exclusive distributed locking for .NET and MongoDB
-
+Exclusive distributed locking for .NET and MongoDB.
+It's available as Class Library (.NET Standart  1.5) on Nuget at https://www.nuget.org/packages/DistributedLock.Mongo/
 ## Usage
 
 ```c#
@@ -13,7 +13,7 @@ IMongoDatabase database = client.GetDatabase("sample");
 IMongoCollection<LockAcquire<Guid>> locks = database.GetCollection<LockAcquire<Guid>>("locks");
 
 // This collection should be a capped! https://docs.mongodb.com/manual/core/capped-collections/
-// The size of the cappred collection should be enough to put all active locks.
+// The size of the capped collection should be enough to put all active locks.
 // One ReleaseSignal is about 32 bytes, so for 100,000 simultaneously locks,
 // you need a capped collection size ~3 megabytes
 IMongoCollection<ReleaseSignal> signals = database.GetCollection<ReleaseSignal>("signals");

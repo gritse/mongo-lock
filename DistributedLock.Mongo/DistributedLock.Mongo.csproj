@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.5</TargetFramework>
+    <Authors>gritse</Authors>
+    <PackageTags>lock,mongodb,distributedlock</PackageTags>
+    <PackageProjectUrl>https://github.com/gritse/mongo-lock</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/gritse/mongo-lock.git</RepositoryUrl>
+    <Company />
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseUrl>https://github.com/gritse/mongo-lock/blob/master/LICENSE</PackageLicenseUrl>
+    <Copyright>gritse</Copyright>
+    <Description>Exclusive distributed lock library for C#/.NET using MongoDB</Description>
   </PropertyGroup>
 
   <ItemGroup>
