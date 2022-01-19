@@ -1,6 +1,6 @@
 # mongo-lock
 Exclusive distributed locking for .NET and MongoDB.
-It's available as Class Library (.NET Standart  1.5) on Nuget at https://www.nuget.org/packages/DistributedLock.Mongo/
+It's available as Class Library on Nuget at https://www.nuget.org/packages/DistributedLock.Mongo/
 ## Usage
 
 ```c#
