@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.5</TargetFramework>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <Authors>gritse</Authors>
     <PackageTags>lock,mongodb,distributedlock</PackageTags>
     <PackageProjectUrl>https://github.com/gritse/mongo-lock</PackageProjectUrl>
