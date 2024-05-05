@@ -11,23 +11,26 @@ namespace DistributedLock.Mongo.Tests
     [TestClass]
     public class LockTests
     {
-        private const string ConnectionString = "--mognodb connection string--";
-        private static readonly IMongoCollection<LockAcquire<string>> Locks;
-        private static readonly IMongoCollection<ReleaseSignal> Signals;
+        private const string ConnectionString = "mongodb://localhost:27017/";
+        private const string TestDb = "sample-db";
 
-        static LockTests()
+        private IMongoCollection<LockAcquire<string>> _locks;
+        private IMongoCollection<ReleaseSignal> _signals;
+
+        [TestInitialize]
+        public async Task Initialize()
         {
-            MongoClient client = new MongoClient(ConnectionString);
-            IMongoDatabase database = client.GetDatabase("dbname");
+            var client = new MongoClient(ConnectionString);
+            var database = client.GetDatabase(TestDb);
 
-            Locks = database.GetCollection<LockAcquire<string>>("locks");
-            Signals = database.GetCollection<ReleaseSignal>("signals");
+            _locks = database.GetCollection<LockAcquire<string>>("locks");
+            _signals = database.GetCollection<ReleaseSignal>("signals");
         }
 
         [TestMethod]
         public async Task AcquireLock()
         {
-            MongoLock<string> mongoLock = new MongoLock<string>(Locks, Signals, Guid.NewGuid().ToString());
+            MongoLock<string> mongoLock = new MongoLock<string>(_locks, _signals, Guid.NewGuid().ToString());
 
             IAcquire acq = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(0));
             Assert.IsTrue(acq.Acquired);
@@ -36,7 +39,7 @@ namespace DistributedLock.Mongo.Tests
         [TestMethod]
         public async Task Acquire_And_Block()
         {
-            MongoLock<string> mongoLock = new MongoLock<string>(Locks, Signals, Guid.NewGuid().ToString());
+            MongoLock<string> mongoLock = new MongoLock<string>(_locks, _signals, Guid.NewGuid().ToString());
 
             IAcquire acq1 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(0));
             Assert.IsTrue(acq1.Acquired);
@@ -48,24 +51,26 @@ namespace DistributedLock.Mongo.Tests
         [TestMethod]
         public async Task Acquire_Block_Release_And_Acquire()
         {
-            MongoLock<string> mongoLock = new MongoLock<string>(Locks, Signals, Guid.NewGuid().ToString());
+            MongoLock<string> mongoLock = new MongoLock<string>(_locks, _signals, Guid.NewGuid().ToString());
 
-            IAcquire acq1 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(0));
-            Assert.IsTrue(acq1.Acquired);
+            await using (IAcquire acq1 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(0)))
+            {
+                Assert.IsTrue(acq1.Acquired);
 
-            IAcquire acq2 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(0));
-            Assert.IsFalse(acq2.Acquired);
+                IAcquire acq2 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(0));
+                Assert.IsFalse(acq2.Acquired);
+            }
 
-            await mongoLock.ReleaseAsync(acq1);
+            // await mongoLock.ReleaseAsync(acq1);
 
             IAcquire acq3 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(0));
             Assert.IsTrue(acq3.Acquired);
         }
 
         [TestMethod]
-        public async Task Acquire_BlockFor5Secounds_Release_Acquire()
+        public async Task Acquire_BlockFor5Seconds_Release_Acquire()
         {
-            MongoLock<string> mongoLock = new MongoLock<string>(Locks, Signals, Guid.NewGuid().ToString());
+            MongoLock<string> mongoLock = new MongoLock<string>(_locks, _signals, Guid.NewGuid().ToString());
 
             IAcquire acq1 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(0));
             Assert.IsTrue(acq1.Acquired);
@@ -82,7 +87,7 @@ namespace DistributedLock.Mongo.Tests
         [TestMethod]
         public async Task Acquire_WaitUntilExpire_Acquire()
         {
-            MongoLock<string> mongoLock = new MongoLock<string>(Locks, Signals, Guid.NewGuid().ToString());
+            MongoLock<string> mongoLock = new MongoLock<string>(_locks, _signals, Guid.NewGuid().ToString());
 
             IAcquire acq1 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(0));
             Assert.IsTrue(acq1.Acquired);
@@ -99,7 +104,7 @@ namespace DistributedLock.Mongo.Tests
         [TestMethod]
         public void Synchronize_CriticalSection_For_4_Threads()
         {
-            MongoLock<string> mongoLock = new MongoLock<string>(Locks, Signals, Guid.NewGuid().ToString());
+            MongoLock<string> mongoLock = new MongoLock<string>(_locks, _signals, Guid.NewGuid().ToString());
 
             List<Task> tasks = new List<Task>();
             List<int> bucket = new List<int>() { 0 };
@@ -111,20 +116,13 @@ namespace DistributedLock.Mongo.Tests
                 {
                     for (int j = 0; j < 100; j++)
                     {
-                        IAcquire acq = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(10));
-                        try
-                        {
-                            int count = bucket.Count;
-                            Thread.Sleep(random.Next(0, 10));
+                        await using IAcquire acq = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(60), TimeSpan.FromSeconds(10));
 
-                            int value = bucket[count - 1];
-                            bucket.Add(value + 1);
-                        }
-                        finally
-                        {
-                            await mongoLock.ReleaseAsync(acq);
-                        }
+                        int count = bucket.Count;
+                        Thread.Sleep(random.Next(0, 10));
 
+                        int value = bucket[count - 1];
+                        bucket.Add(value + 1);
                     }
                 }));
             }

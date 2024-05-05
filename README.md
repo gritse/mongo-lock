@@ -1,25 +1,29 @@
-# mongo-lock
-Exclusive distributed locking for .NET and MongoDB.
-It's available as Class Library on Nuget at https://www.nuget.org/packages/DistributedLock.Mongo/
+# DistributedLock.Mongo: Exclusive Distributed Locking for .NET
+
+[![NuGet version (DistributedLock.Mongo)](https://img.shields.io/nuget/v/DistributedLock.Mongo.svg?style=flat-square)](https://www.nuget.org/packages/DistributedLock.Mongo/)
+
+DistributedLock.Mongo is a class library available on NuGet that enables exclusive distributed locking mechanisms for applications using .NET and MongoDB. It facilitates safe coordination of operations across different system components by managing access to shared resources. For more details or to download the library, visit the NuGet [page](https://www.nuget.org/packages/DistributedLock.Mongo/).
+
 ## Usage
 
 ```c#
-const string сonnectionString = "--mognodb connection string--";
+const string connectionString = ""; // mognodb connection string
 
-MongoClient client = new MongoClient(сonnectionString);
-IMongoDatabase database = client.GetDatabase("sample");
+MongoClient client = new MongoClient(connectionString);
+IMongoDatabase database = client.GetDatabase("sample-db");
 
 // Regular collection, not a capped!
 IMongoCollection<LockAcquire<Guid>> locks = database.GetCollection<LockAcquire<Guid>>("locks");
 
-// This collection should be a capped! https://docs.mongodb.com/manual/core/capped-collections/
-// The size of the capped collection should be enough to put all active locks.
-// One ReleaseSignal is about 32 bytes, so for 100,000 simultaneously locks,
-// you need a capped collection size ~3 megabytes
+// Ensure this collection is capped. Refer to MongoDB's documentation on capped collections:
+// https://docs.mongodb.com/manual/core/capped-collections/
+// The capped collection size should be sufficient to accommodate all active locks. With each ReleaseSignal estimated at 32 bytes,
+// approximately 3 megabytes will be required to handle up to 100,000 simultaneous locks.
 IMongoCollection<ReleaseSignal> signals = database.GetCollection<ReleaseSignal>("signals");
 
+// The 'lockId' variable acts as the identifier for your distributed lock. It can be a Guid, string, int, or any other suitable type
+// depending on your application's requirements and the characteristics of the locks being implemented.
 Guid lockId = Guid.Parse("BF431614-4FB0-4489-84AA-D3EFEEF6BE7E");
-// Guid lockId is a name of your distributed lock. You can also use string, int, etc.
 MongoLock<Guid> mongoLock = new MongoLock<Guid>(locks, signals, lockId);
 
 // Try to acquire exclusve lock. Lifetime for created lock is 30 secounds

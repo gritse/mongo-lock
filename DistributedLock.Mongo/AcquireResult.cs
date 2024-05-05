@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace DistributedLock.Mongo
 {
     internal class AcquireResult : IAcquire
     {
-        public AcquireResult(Guid acquireId)
+        private readonly IDistributedLock _distributedLock;
+
+        public AcquireResult(Guid acquireId, IDistributedLock distributedLock)
         {
+            _distributedLock = distributedLock;
             Acquired = true;
             AcquireId = acquireId;
         }
@@ -18,5 +22,13 @@ namespace DistributedLock.Mongo
         public bool Acquired { get; private set; }
 
         public Guid AcquireId { get; private set; }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Acquired && _distributedLock != null)
+            {
+                await _distributedLock.ReleaseAsync(this);
+            }
+        }
     }
 }

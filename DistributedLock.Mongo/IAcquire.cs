@@ -2,7 +2,7 @@
 
 namespace DistributedLock.Mongo
 {
-    public interface IAcquire
+    public interface IAcquire : IAsyncDisposable
     {
         /// <summary>
         /// true if lock successfully acquired; otherwise, false

@@ -36,29 +36,47 @@ namespace DistributedLock.Mongo
             if (lifetime < TimeSpan.Zero || lifetime > TimeSpan.MaxValue) throw new ArgumentOutOfRangeException(nameof(lifetime), "The value of lifetime in milliseconds is negative or is greater than MaxValue");
             if (timeout < TimeSpan.Zero || timeout > TimeSpan.MaxValue) throw new ArgumentOutOfRangeException(nameof(timeout), "The value of timeout in milliseconds is negative or is greater than MaxValue");
 
-            Guid acquireId = Guid.NewGuid();
+            var acquireId = Guid.NewGuid();
 
             while (await TryUpdate(lifetime, acquireId) == false)
             {
-                using (IAsyncCursor<LockAcquire<T>> cursor = await _locks.FindAsync(_builder.Eq(x => x.Id, _id)))
+                using (var cursor = await _locks.FindAsync(_builder.Eq(x => x.Id, _id)))
                 {
-                    LockAcquire<T> acquire = await cursor.FirstOrDefaultAsync();
+                    var acquire = await cursor.FirstOrDefaultAsync();
 
                     if (acquire != null && await WaitSignal(acquire.AcquireId, timeout) == false)
                     {
-                        return await TryUpdate(lifetime, acquireId) == false ? new AcquireResult() : new AcquireResult(acquireId);
+                        return await TryUpdate(lifetime, acquireId) == false ? new AcquireResult() : new AcquireResult(acquireId, this);
                     }
                 }
             }
 
-            return new AcquireResult(acquireId);
+            return new AcquireResult(acquireId, this);
+        }
+
+        /// <summary>
+        ///  Releases an exclusive lock for the specified acquire. If lock isn't exist or already released, there will be no exceptions throwed
+        /// </summary>
+        /// <param name="acquire">IAcquire object returned by AcquireAsync</param>
+        /// <returns></returns>
+        public async Task ReleaseAsync(IAcquire acquire)
+        {
+            if (acquire == null) throw new ArgumentNullException(nameof(acquire));
+            if (acquire.Acquired == false) return;
+
+            var updateResult = await _locks.UpdateOneAsync(
+                filter: _builder.And(_builder.Eq(x => x.Id, _id), _builder.Eq(x => x.AcquireId, acquire.AcquireId)), // x => x.Id == _id && x.AcquireId == acquire.AcquireId,
+                update: new UpdateDefinitionBuilder<LockAcquire<T>>().Set(x => x.Acquired, false));
+
+            if (updateResult.IsAcknowledged && updateResult.ModifiedCount > 0)
+                await _signals.InsertOneAsync(new ReleaseSignal { AcquireId = acquire.AcquireId });
         }
 
         private async Task<bool> WaitSignal(Guid acquireId, TimeSpan timeout)
         {
-            using (IAsyncCursor<ReleaseSignal> cursor = await _signals.Find(x => x.AcquireId == acquireId, new FindOptions { MaxAwaitTime = timeout, CursorType = CursorType.TailableAwait }).ToCursorAsync())
+            using (var cursor = await _signals.Find(x => x.AcquireId == acquireId, new FindOptions { MaxAwaitTime = timeout, CursorType = CursorType.TailableAwait }).ToCursorAsync())
             {
-                DateTime started = DateTime.UtcNow;
+                var started = DateTime.UtcNow;
 
                 while (await cursor.MoveNextAsync())
                 {
@@ -80,7 +98,7 @@ namespace DistributedLock.Mongo
                         .Set(x => x.AcquireId, acquireId)
                         .SetOnInsert(x => x.Id, _id);
 
-                FilterDefinition<LockAcquire<T>> filter = _builder.And(
+                var filter = _builder.And(
                     _builder.Eq(x => x.Id, _id), 
                     _builder.Or(
                         _builder.Eq(x => x.Acquired, false),
@@ -102,24 +120,5 @@ namespace DistributedLock.Mongo
                 throw;
             }
         }
-
-        /// <summary>
-        ///  Releases an exclusive lock for the specified acquire. If lock isn't exist or already released, there will be no exceptions throwed
-        /// </summary>
-        /// <param name="acquire">IAcquire object returned by AcquireAsync</param>
-        /// <returns></returns>
-        public async Task ReleaseAsync(IAcquire acquire)
-        {
-            if (acquire == null) throw new ArgumentNullException(nameof(acquire));
-            if (acquire.Acquired == false) return;
-
-            var updateResult = await _locks.UpdateOneAsync(
-                filter: _builder.And(_builder.Eq(x => x.Id, _id), _builder.Eq(x => x.AcquireId, acquire.AcquireId)), // x => x.Id == _id && x.AcquireId == acquire.AcquireId,
-                update: new UpdateDefinitionBuilder<LockAcquire<T>>().Set(x => x.Acquired, false));
-
-            if (updateResult.IsAcknowledged && updateResult.ModifiedCount > 0)
-                await _signals.InsertOneAsync(new ReleaseSignal { AcquireId = acquire.AcquireId });
-        }
-
     }
 }
