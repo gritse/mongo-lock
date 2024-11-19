@@ -1,4 +1,4 @@
-﻿using DistributedLock.Mongo;
+using DistributedLock.Mongo;
 using MongoDB.Driver;
 using System;
 
@@ -20,6 +20,8 @@ var signals = database.GetCollection<ReleaseSignal>("signals");
 // depending on your application's requirements and the characteristics of the locks being implemented.
 var lockId = Guid.Parse("BF431614-4FB0-4489-84AA-D3EFEEF6BE7E");
 var mongoLock = new MongoLock<Guid>(locks, signals, lockId);
+// another way to create a lock
+var mongoLock2 = MongoLock<Guid>.GenerateNew(locks, signals, lockId);
 
 // Attempt to acquire an exclusive lock. The lifetime for the created lock is 30 seconds.
 await using (var acquire = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(10)))

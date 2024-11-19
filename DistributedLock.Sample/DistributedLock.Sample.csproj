@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDB.Driver" Version="2.25.0" />
+    <PackageReference Include="MongoDB.Driver" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DistributedLock.Mongo\DistributedLock.Mongo.csproj" />
+    <ProjectReference Include="..\src\DistributedLock.Mongo\DistributedLock.Mongo.csproj" />
   </ItemGroup>
 
 </Project>
