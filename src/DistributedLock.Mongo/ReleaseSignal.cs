@@ -3,12 +3,12 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace DistributedLock.Mongo;
 
 /// <summary>
-/// 释放信号
+/// release signal
 /// </summary>
 public sealed class ReleaseSignal
 {
     /// <summary>
-    /// 锁ID
+    /// id
     /// </summary>
     [BsonId]
     public Guid AcquireId { get; set; }

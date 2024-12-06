@@ -1,27 +1,18 @@
-﻿using MongoDB.Driver;
+using MongoDB.Driver;
 
 namespace DistributedLock.Mongo;
 
-/// <inheritdoc />
-public sealed class MongoLock<T> : IDistributedLock
+/// <summary>
+///  Initializes a new instance of the MongoLock class with a locks and signals collections and lock identifier
+/// </summary>
+/// <param name="locks">MongoCollection to store locks, shouldn't be a capped collection</param>
+/// <param name="signals">MongoCollection to push signals to release, should be a capped collection</param>
+/// <param name="lock">Identifier of exclusive lock</param>
+public sealed class MongoLock<T>(IMongoCollection<LockAcquire<T>> locks, IMongoCollection<ReleaseSignal> signals, T @lock) : IDistributedLock
 {
     private readonly FilterDefinitionBuilder<LockAcquire<T>> _builder = new();
-    private readonly IMongoCollection<LockAcquire<T>> _locks;
-    private readonly IMongoCollection<ReleaseSignal> _signals;
-    private readonly T _id;
-
-    /// <summary>
-    ///  Initializes a new instance of the MongoLock class with a locks and signals collections and lock identifier
-    /// </summary>
-    /// <param name="locks">MongoCollection to store locks, shouldn't be a capped collection</param>
-    /// <param name="signals">MongoCollection to push signals to release, should be a capped collection</param>
-    /// <param name="lock">Identifier of exclusive lock</param>
-    public MongoLock(IMongoCollection<LockAcquire<T>> locks, IMongoCollection<ReleaseSignal> signals, T @lock)
-    {
-        _locks = locks ?? throw new ArgumentNullException(nameof(locks));
-        _signals = signals ?? throw new ArgumentNullException(nameof(signals));
-        _id = @lock;
-    }
+    private readonly IMongoCollection<LockAcquire<T>> _locks = locks ?? throw new ArgumentNullException(nameof(locks));
+    private readonly IMongoCollection<ReleaseSignal> _signals = signals ?? throw new ArgumentNullException(nameof(signals));
 
     /// <inheritdoc />
     public async Task<IAcquire> AcquireAsync(TimeSpan lifetime, TimeSpan timeout)
@@ -33,7 +24,7 @@ public sealed class MongoLock<T> : IDistributedLock
 
         while (await TryUpdate(lifetime, acquireId) == false)
         {
-            using var cursor = await _locks.FindAsync(_builder.Eq(x => x.Id, _id));
+            using var cursor = await _locks.FindAsync(_builder.Eq(x => x.Id, @lock));
             var acquire = await cursor.FirstOrDefaultAsync();
 
             if (acquire != null && await WaitSignal(acquire.AcquireId, timeout) == false)
@@ -44,9 +35,9 @@ public sealed class MongoLock<T> : IDistributedLock
 
         return new AcquireResult(acquireId, this);
     }
-    
+
     /// <summary>
-    /// 获取一个新的锁
+    /// Generate new lock
     /// </summary>
     /// <param name="locks"></param>
     /// <param name="signals"></param>
@@ -60,7 +51,7 @@ public sealed class MongoLock<T> : IDistributedLock
         if (acquire.Acquired == false) return;
 
         var updateResult = await _locks.UpdateOneAsync(
-            filter: _builder.And(_builder.Eq(x => x.Id, _id), _builder.Eq(x => x.AcquireId, acquire.AcquireId)), // x => x.Id == _id && x.AcquireId == acquire.AcquireId,
+            filter: _builder.And(_builder.Eq(x => x.Id, @lock), _builder.Eq(x => x.AcquireId, acquire.AcquireId)), // x => x.Id == _id && x.AcquireId == acquire.AcquireId,
             update: new UpdateDefinitionBuilder<LockAcquire<T>>().Set(x => x.Acquired, false));
 
         if (updateResult.IsAcknowledged && updateResult.ModifiedCount > 0)
@@ -89,10 +80,10 @@ public sealed class MongoLock<T> : IDistributedLock
                 .Set(x => x.Acquired, true)
                 .Set(x => x.ExpiresIn, DateTime.UtcNow + lifetime)
                 .Set(x => x.AcquireId, acquireId)
-                .SetOnInsert(x => x.Id, _id);
+                .SetOnInsert(x => x.Id, @lock);
 
             var filter = _builder.And(
-                _builder.Eq(x => x.Id, _id), 
+                _builder.Eq(x => x.Id, @lock),
                 _builder.Or(
                     _builder.Eq(x => x.Acquired, false),
                     _builder.Lte(x => x.ExpiresIn, DateTime.UtcNow)

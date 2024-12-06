@@ -27,7 +27,7 @@ var summaries = new[]
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/weatherforecast",async (IMongoLockFactory<Guid> lockerFactory) =>
+app.MapGet("/weatherforecast", async (IMongoLockFactory<Guid> lockerFactory) =>
     {
         var locker = lockerFactory.GenerateNewLock(Guid.Parse("019342fe-0ed2-743d-b64f-db3ec558302d"));
         var acq = await locker.AcquireAsync(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(10));

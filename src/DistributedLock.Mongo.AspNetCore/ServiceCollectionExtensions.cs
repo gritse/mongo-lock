@@ -11,7 +11,7 @@ using MongoDB.Driver;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// 服务扩展类
+/// ServiceCollectionExtensions
 /// </summary>
 public static class ServiceCollectionExtensions
 {

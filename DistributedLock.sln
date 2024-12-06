@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2036
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35507.96
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedLock.Sample", "DistributedLock.Sample\DistributedLock.Sample.csproj", "{FA64B804-6D02-44E3-8F04-FDF081BE397A}"
 EndProject
@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedLock.Mongo.AspNe
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{A145454E-9718-48F2-AC54-8912931030BE}"
 	ProjectSection(SolutionItems) = preProject
-		Directory.Build.props = src\Directory.Build.props
+		src\Directory.Build.props = src\Directory.Build.props
 		MongoDistributedLock.snk = MongoDistributedLock.snk
 	EndProjectSection
 EndProject
@@ -51,11 +51,11 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {B46B7F34-BB58-417A-8FFB-ACC03FB7EA6F}
-	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{FC8EF5FF-C88B-4F0F-9CA0-E883D3BC14EF} = {58F6683F-8C07-4EDC-B8A2-02C4DCB95F91}
 		{A2662941-7086-4B3A-BDF0-0C5E5A91593D} = {58F6683F-8C07-4EDC-B8A2-02C4DCB95F91}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B46B7F34-BB58-417A-8FFB-ACC03FB7EA6F}
 	EndGlobalSection
 EndGlobal

@@ -1,6 +1,6 @@
+using System;
 using DistributedLock.Mongo;
 using MongoDB.Driver;
-using System;
 
 const string connectionString = "mongodb://localhost:27017/"; // MongoDB connection string
 

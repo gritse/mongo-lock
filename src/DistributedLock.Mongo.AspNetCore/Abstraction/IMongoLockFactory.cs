@@ -1,12 +1,12 @@
 namespace DistributedLock.Mongo.AspNetCore.Abstraction;
 
 /// <summary>
-/// 工厂接口
+/// lock factory
 /// </summary>
 public interface IMongoLockFactory<in T>
 {
     /// <summary>
-    /// 创建客户端
+    /// generate new lock
     /// </summary>
     /// <param name="locks"></param>
     /// <returns></returns>

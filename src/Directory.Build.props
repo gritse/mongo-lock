@@ -11,6 +11,7 @@
     <GenerateAssemblyProductAttribute>True</GenerateAssemblyProductAttribute>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+	<GarbageCollectionAdaptationMode>1</GarbageCollectionAdaptationMode>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +24,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!--<CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>-->
     <NoWarn>$(NoWarn);</NoWarn>
-    <!--控制生成产物目录-->
     <!--<ArtifactsPath>$(MSBuildThisFileDirectory)artifacts</ArtifactsPath>-->
   </PropertyGroup>
 

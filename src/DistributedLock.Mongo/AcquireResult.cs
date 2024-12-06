@@ -6,7 +6,7 @@ internal sealed class AcquireResult : IAcquire
     private readonly IDistributedLock? _distributedLock;
 
     /// <summary>
-    /// 构造函数
+    /// create a new instance of AcquireResult
     /// </summary>
     /// <param name="acquireId"></param>
     /// <param name="distributedLock"></param>
@@ -18,7 +18,7 @@ internal sealed class AcquireResult : IAcquire
     }
 
     /// <summary>
-    /// 构造函数
+    /// create a new instance of AcquireResult
     /// </summary>
     public AcquireResult()
     {

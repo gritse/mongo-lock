@@ -5,7 +5,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace DistributedLock.Mongo;
 
 /// <summary>
-/// 锁定实体
+/// Lock acquire
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public sealed class LockAcquire<T>
@@ -16,17 +16,17 @@ public sealed class LockAcquire<T>
     [BsonId]
     public T? Id { get; set; }
     /// <summary>
-    /// 过期时间
+    /// Expires time
     /// </summary>
     public DateTime ExpiresIn { get; set; }
 
     /// <summary>
-    /// 是否成功
+    /// Successfully acquired
     /// </summary>
     public bool Acquired { get; set; }
 
     /// <summary>
-    /// 锁ID
+    /// Acquire id
     /// </summary>
     public Guid AcquireId { get; set; }
 }
