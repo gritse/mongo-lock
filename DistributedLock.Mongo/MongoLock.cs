@@ -40,6 +40,8 @@ namespace DistributedLock.Mongo
 
             while (await TryUpdate(lifetime, acquireId) == false)
             {
+                if (timeout == TimeSpan.Zero) return new AcquireResult(); // Do not wait, return immediately
+
                 using (var cursor = await _locks.FindAsync(_builder.Eq(x => x.Id, _id)))
                 {
                     var acquire = await cursor.FirstOrDefaultAsync();

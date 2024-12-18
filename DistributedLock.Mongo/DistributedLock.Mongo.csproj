@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>2.1.0</VersionPrefix>
+    <VersionPrefix>2.2.0</VersionPrefix>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <Authors>gritse</Authors>
     <PackageTags>lock,mongodb,mongo,distributed,distributedlock,mutex</PackageTags>
@@ -13,8 +13,7 @@
     <Copyright>gritse</Copyright>
     <Description>Exclusive distributed lock library for C#/.NET using MongoDB</Description>
     <PackageReleaseNotes>
-      * IAcquire now implements IAsyncDisposable
-      * MongoDB.Driver updated to 2.25.0
+      * Fix: do not await in case of zero timeout
     </PackageReleaseNotes>
   </PropertyGroup>
 
