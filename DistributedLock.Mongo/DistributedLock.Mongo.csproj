@@ -7,6 +7,7 @@
     <PackageTags>lock,mongodb,mongo,distributed,distributedlock,mutex</PackageTags>
     <PackageProjectUrl>https://github.com/gritse/mongo-lock</PackageProjectUrl>
     <RepositoryUrl>https://github.com/gritse/mongo-lock.git</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <Company />
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -21,4 +22,7 @@
     <PackageReference Include="MongoDB.Driver" Version="2.25.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 </Project>
