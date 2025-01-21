@@ -10,8 +10,14 @@ DistributedLock.Mongo is a class library available on NuGet that enables exclusi
 using DistributedLock.Mongo;
 using MongoDB.Driver;
 using System;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
 
 const string connectionString = "mongodb://localhost:27017/"; // MongoDB connection string
+
+// Required for Guid lockId since MongoDB.Driver 3.0.0
+BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
 
 var client = new MongoClient(connectionString);
 var database = client.GetDatabase("sample-db");
