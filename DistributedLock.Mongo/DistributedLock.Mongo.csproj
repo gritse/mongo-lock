@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <VersionPrefix>3.0.0</VersionPrefix>
-    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;net6.0;net472</TargetFrameworks>
     <Authors>gritse</Authors>
     <PackageTags>lock,mongodb,mongo,distributed,distributedlock,mutex</PackageTags>
     <PackageProjectUrl>https://github.com/gritse/mongo-lock</PackageProjectUrl>
