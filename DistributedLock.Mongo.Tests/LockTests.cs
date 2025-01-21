@@ -1,4 +1,7 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -16,6 +19,12 @@ namespace DistributedLock.Mongo.Tests
 
         private IMongoCollection<LockAcquire<string>> _locks;
         private IMongoCollection<ReleaseSignal> _signals;
+
+        [AssemblyInitialize]
+        public static void AssemblyInit(TestContext context)
+        {
+            BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+        }
 
         [TestInitialize]
         public async Task Initialize()

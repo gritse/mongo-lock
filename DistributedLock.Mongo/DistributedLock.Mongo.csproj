@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <VersionPrefix>2.2.0</VersionPrefix>
+    <VersionPrefix>3.0.0</VersionPrefix>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <Authors>gritse</Authors>
     <PackageTags>lock,mongodb,mongo,distributed,distributedlock,mutex</PackageTags>
@@ -14,15 +14,15 @@
     <Copyright>gritse</Copyright>
     <Description>Exclusive distributed lock library for C#/.NET using MongoDB</Description>
     <PackageReleaseNotes>
-      * Fix: do not await in case of zero timeout
+      * Upgraded to Mongo v3
     </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDB.Driver" Version="2.25.0" />
+    <PackageReference Include="MongoDB.Driver" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
