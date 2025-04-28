@@ -1,6 +1,7 @@
 ﻿using MongoDB.Driver;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DistributedLock.Mongo
@@ -30,25 +31,28 @@ namespace DistributedLock.Mongo
         /// </summary>
         /// <param name="lifetime">A TimeSpan representing the amount of time after which the lock is automatically released</param>
         /// <param name="timeout">A TimeSpan representing the amount of time to wait for the lock</param>
+        /// <param name="cancellationToken">Cancellation token</param>
         /// <returns></returns>
-        public async Task<IAcquire> AcquireAsync(TimeSpan lifetime, TimeSpan timeout)
+        public async Task<IAcquire> AcquireAsync(TimeSpan lifetime, TimeSpan timeout, CancellationToken cancellationToken = default)
         {
             if (lifetime < TimeSpan.Zero || lifetime > TimeSpan.MaxValue) throw new ArgumentOutOfRangeException(nameof(lifetime), "The value of lifetime in milliseconds is negative or is greater than MaxValue");
             if (timeout < TimeSpan.Zero || timeout > TimeSpan.MaxValue) throw new ArgumentOutOfRangeException(nameof(timeout), "The value of timeout in milliseconds is negative or is greater than MaxValue");
 
             var acquireId = Guid.NewGuid();
 
-            while (await TryUpdate(lifetime, acquireId) == false)
+            while (await TryUpdate(lifetime, acquireId, cancellationToken) == false)
             {
                 if (timeout == TimeSpan.Zero) return new AcquireResult(); // Do not wait, return immediately
 
-                using (var cursor = await _locks.FindAsync(_builder.Eq(x => x.Id, _id)))
+                using (var cursor = await _locks.FindAsync(_builder.Eq(x => x.Id, _id), cancellationToken: cancellationToken))
                 {
-                    var acquire = await cursor.FirstOrDefaultAsync();
+                    var acquire = await cursor.FirstOrDefaultAsync(cancellationToken: cancellationToken);
 
-                    if (acquire != null && await WaitSignal(acquire.AcquireId, timeout) == false)
+                    if (acquire != null && await WaitSignal(acquire.AcquireId, timeout, cancellationToken) == false)
                     {
-                        return await TryUpdate(lifetime, acquireId) == false ? new AcquireResult() : new AcquireResult(acquireId, this);
+                        return await TryUpdate(lifetime, acquireId, cancellationToken) == false
+                            ? new AcquireResult()
+                            : new AcquireResult(acquireId, this);
                     }
                 }
             }
@@ -60,27 +64,29 @@ namespace DistributedLock.Mongo
         ///  Releases an exclusive lock for the specified acquire. If lock isn't exist or already released, there will be no exceptions throwed
         /// </summary>
         /// <param name="acquire">IAcquire object returned by AcquireAsync</param>
+        /// <param name="cancellationToken">Cancellation Token</param>
         /// <returns></returns>
-        public async Task ReleaseAsync(IAcquire acquire)
+        public async Task ReleaseAsync(IAcquire acquire, CancellationToken cancellationToken = default)
         {
             if (acquire == null) throw new ArgumentNullException(nameof(acquire));
             if (acquire.Acquired == false) return;
 
             var updateResult = await _locks.UpdateOneAsync(
                 filter: _builder.And(_builder.Eq(x => x.Id, _id), _builder.Eq(x => x.AcquireId, acquire.AcquireId)), // x => x.Id == _id && x.AcquireId == acquire.AcquireId,
-                update: new UpdateDefinitionBuilder<LockAcquire<T>>().Set(x => x.Acquired, false));
+                update: new UpdateDefinitionBuilder<LockAcquire<T>>().Set(x => x.Acquired, false),
+                cancellationToken: cancellationToken);
 
             if (updateResult.IsAcknowledged && updateResult.ModifiedCount > 0)
-                await _signals.InsertOneAsync(new ReleaseSignal { AcquireId = acquire.AcquireId });
+                await _signals.InsertOneAsync(new ReleaseSignal { AcquireId = acquire.AcquireId }, cancellationToken: cancellationToken);
         }
 
-        private async Task<bool> WaitSignal(Guid acquireId, TimeSpan timeout)
+        private async Task<bool> WaitSignal(Guid acquireId, TimeSpan timeout, CancellationToken cancellationToken)
         {
             using (var cursor = await _signals.Find(x => x.AcquireId == acquireId, new FindOptions { MaxAwaitTime = timeout, CursorType = CursorType.TailableAwait }).ToCursorAsync())
             {
                 var started = DateTime.UtcNow;
 
-                while (await cursor.MoveNextAsync())
+                while (await cursor.MoveNextAsync(cancellationToken))
                 {
                     if (cursor.Current.Any()) return true;
                     if (DateTime.UtcNow - started >= timeout) return false;
@@ -90,7 +96,7 @@ namespace DistributedLock.Mongo
             }
         }
 
-        private async Task<bool> TryUpdate(TimeSpan lifetime, Guid acquireId)
+        private async Task<bool> TryUpdate(TimeSpan lifetime, Guid acquireId, CancellationToken cancellationToken)
         {
             try
             {
@@ -110,7 +116,8 @@ namespace DistributedLock.Mongo
 
                 var updateResult = await _locks.UpdateOneAsync(
                     filter: filter, // x => x.Id == _id && (!x.Acquired || x.ExpiresIn <= DateTime.UtcNow),
-                    update: update, options: new UpdateOptions { IsUpsert = true });
+                    update: update, options: new UpdateOptions { IsUpsert = true },
+                    cancellationToken: cancellationToken);
 
                 return updateResult.IsAcknowledged;
             }
