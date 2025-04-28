@@ -111,6 +111,31 @@ namespace DistributedLock.Mongo.Tests
         }
 
         [TestMethod]
+        public async Task Acquire_Wait_Cancellation_Acquire()
+        {
+            MongoLock<string> mongoLock = new MongoLock<string>(_locks, _signals, Guid.NewGuid().ToString());
+
+            IAcquire acq1 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(60 * 60), TimeSpan.FromSeconds(0));
+            Assert.IsTrue(acq1.Acquired);
+
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+            var timer = new Timer(_ =>
+            {
+                cancellationTokenSource.Cancel();
+            }, null, TimeSpan.FromSeconds(5), Timeout.InfiniteTimeSpan);
+
+            await Assert.ThrowsExceptionAsync<OperationCanceledException>(async () => await mongoLock.AcquireAsync(
+                TimeSpan.FromSeconds(10),
+                TimeSpan.FromSeconds(60 * 60),
+                cancellationTokenSource.Token));
+
+            IAcquire acq3 = await mongoLock.AcquireAsync(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(0));
+            Assert.IsFalse(acq3.Acquired);
+        }
+
+
+        [TestMethod]
         public void Synchronize_CriticalSection_For_4_Threads()
         {
             MongoLock<string> mongoLock = new MongoLock<string>(_locks, _signals, Guid.NewGuid().ToString());
