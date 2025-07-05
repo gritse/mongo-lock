@@ -1,6 +1,6 @@
 # DistributedLock.Mongo: Exclusive Distributed Locking for .NET
 
-[![NuGet version (DistributedLock.Mongo)](https://img.shields.io/nuget/v/DistributedLock.Mongo.svg?style=flat-square)](https://www.nuget.org/packages/DistributedLock.Mongo/)
+[![NuGet version (DistributedLock.Mongo)](https://img.shields.io/nuget/v/DistributedLock.Mongo.svg?style=flat-square)](https://www.nuget.org/packages/DistributedLock.Mongo/) [![Nuget](https://img.shields.io/nuget/dt/DistributedLock.Mongo)](https://www.nuget.org/packages/DistributedLock.Mongo/)
 
 DistributedLock.Mongo is a class library available on NuGet that enables exclusive distributed locking mechanisms for applications using .NET and MongoDB. It facilitates safe coordination of operations across different system components by managing access to shared resources. For more details or to download the library, visit the NuGet [page](https://www.nuget.org/packages/DistributedLock.Mongo/).
 
